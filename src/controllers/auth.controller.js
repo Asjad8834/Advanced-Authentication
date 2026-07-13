@@ -8,6 +8,7 @@ import { measureMemory } from "vm";
 import { sendEmail } from "../services/email.service.js";
 import { generateOtp, getOtpHtml } from "../utils/utils.js";
 import otpmodel from "../models/otp.model.js"; 
+import otpModel from "../models/otp.model.js";
 
 
 //Register function
@@ -48,8 +49,21 @@ export async function registerUser(req, res){
       email,
       password: hashedPassword
     })
-  // email --> to , 
-    await sendEmail(email, )
+
+
+    const otp = generateOtp();
+    const html = getOtpHtml(otp);
+
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+
+    await otpModel.create({
+      email,
+      user: user._id,
+      otpHash
+    });
+
+    // email--> [to , subject, text, html]
+    await sendEmail(email, "OTP Verification", `Your OTP code is ${otp}`, html)
     
     
     
@@ -86,6 +100,12 @@ export async function login(req, res){
   if(!user){
     return res.status(401).json({
       message:"Invalid credentials"
+    })
+  }
+
+  if(!user.verified){
+    return res.status(401).json({
+      message:"Unauthorized, user not verified",
     })
   }
 
