@@ -22,9 +22,9 @@ const userSchema = new mongoose.Schema({
     required:[true, "Passowrd is required"],
   },
 
-  verfied:{
+  verified:{
     type: Boolean,
-    default: false
+    default: false,
   }
 
 })

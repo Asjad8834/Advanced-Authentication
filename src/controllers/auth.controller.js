@@ -69,7 +69,7 @@ export async function registerUser(req, res){
     
     // We have made to tokens one is the acces token and the other is the refresh token---> Access token is short lived(max 15 min) and we will store it in the memory and the other being the refresh token which is long lived and we will store it in the cookies
 
-    //How these two function is that to maximze security; the server first issue an access token and a refreh token to the user the access token expires after a small duration and now whatevver the function the user assigns to the server it is verfied by the refresh token which can be used by the server to obtain the acces token and complete the assigned task
+    //How these two function is that to maximze security; the server first issue an access token and a refreh token to the user the access token expires after a small duration and now whatevver the function the user assigns to the server it is verified by the refresh token which can be used by the server to obtain the acces token and complete the assigned task
     
     return res.status(201).json({
       message:"User registered Succesfully",
@@ -97,6 +97,7 @@ export async function login(req, res){
 
   const user = await userModel.findOne({email});
 
+
   if(!user){
     return res.status(401).json({
       message:"Invalid credentials"
@@ -123,7 +124,7 @@ export async function login(req, res){
     id: user._id
   }, config.JWT_SECRET, { expiresIn:"7d" });
 
-  const refreshTokenHash = crypto.createHash("sha256").update(refershToken).digest("hex");
+  const refreshTokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
 
   const session = await sessionModel.create({
     user: user.id,
@@ -308,9 +309,19 @@ export async function verifyEmail(req, res){
     })
   }
 
-  const user = await userModel.findByIdAndUpdate(otpDoc.user, {
-    verified: true
-  })
+
+  const user = await userModel.findByIdAndUpdate(
+    otpDoc.user,
+    {
+        $set: {
+            verified: true,
+        },
+    },
+    {
+        new: true,
+        runValidators: true,
+    }
+);
 
 
   await otpModel.deleteMany({
