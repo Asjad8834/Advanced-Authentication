@@ -5,6 +5,9 @@ import crypto from "crypto";
 import config from "../config/config.js";
 import sessionModel from "../models/session.model.js";
 import { measureMemory } from "vm";
+import { sendEmail } from "../services/email.service.js";
+import { generateOtp, getOtpHtml } from "../utils/utils.js";
+import otpmodel from "../models/otp.model.js"; 
 
 
 //Register function
@@ -45,38 +48,10 @@ export async function registerUser(req, res){
       email,
       password: hashedPassword
     })
+  // email --> to , 
+    await sendEmail(email, )
     
-    //Refresh token
-    const refreshToken = jwt.sign({
-      id: user._id,
-    }, config.JWT_SECRET, { expiresIn: "7d" })
-
-
-    const refreshTokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
-
-
-    // we will create a session for this user now
-    const session = await sessionModel.create({
-      user: user._id,
-      refreshTokenHash,
-      ip: req.ip,
-      userAgent: req.headers["user-agent"]
-    })
-
-
-    // Now we will assign an access token to this created User
-    const accessToken = jwt.sign({
-      id: user._id,
-      sessionId: session._id,
-    }, config.JWT_SECRET, { expiresIn: "15m" })
-
-
-    res.cookie("refreshtoken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 1000 // 7 days
-    })
+    
     
     // We have made to tokens one is the acces token and the other is the refresh token---> Access token is short lived(max 15 min) and we will store it in the memory and the other being the refresh token which is long lived and we will store it in the cookies
 
@@ -87,9 +62,8 @@ export async function registerUser(req, res){
       user:{
         username: user.username,
         email: user.email,
-        password: user.password,
+        verified: user.verified,
       },
-      accessToken,
     })
 
   }
